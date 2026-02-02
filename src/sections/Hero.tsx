@@ -1,8 +1,11 @@
-import { useEffect, useRef } from 'react';
-import { Volume2, ArrowDown } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Volume2, VolumeX, ArrowDown } from 'lucide-react';
+import benitoSound from '../sounds/benito.mp3';
 
 export function Hero() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -58,6 +61,40 @@ export function Hero() {
     };
   }, []);
 
+  useEffect(() => {
+    // Inicializar el audio
+    audioRef.current = new Audio(benitoSound);
+    audioRef.current.loop = true;
+
+    const handleEnded = () => {
+      setIsPlaying(false);
+    };
+
+    audioRef.current.addEventListener('ended', handleEnded);
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.removeEventListener('ended', handleEnded);
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  const toggleAudio = () => {
+    if (!audioRef.current) return;
+
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play().catch(error => {
+        console.error('Error al reproducir el audio:', error);
+      });
+      setIsPlaying(true);
+    }
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Animated waveform background */}
@@ -73,9 +110,17 @@ export function Hero() {
       {/* Content */}
       <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
         <div className="mb-6 flex justify-center">
-          <div className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center animate-pulse">
-            <Volume2 className="w-5 h-5 text-white/60" />
-          </div>
+          <button
+            onClick={toggleAudio}
+            className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center hover:bg-white/10 transition-all duration-300 group"
+            aria-label={isPlaying ? "Pausar audio" : "Reproducir audio"}
+          >
+            {isPlaying ? (
+              <Volume2 className="w-5 h-5 text-white/80 group-hover:text-white" />
+            ) : (
+              <VolumeX className="w-5 h-5 text-white/60 group-hover:text-white/80" />
+            )}
+          </button>
         </div>
         
         <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light tracking-tight mb-4 text-white">
